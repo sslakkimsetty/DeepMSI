@@ -49,6 +49,12 @@ classifier = classify(model_opts, data = PATH_TO_DATA, batch_size = 32, optim = 
 ```python
 classifier.train()
 ```
+### Validation
+
+```python
+pred_label, _, _ = classifier.val()
+```
+`pred_label`  is the predicted label by the classifier
 
 ### Visualizations
 
