@@ -35,8 +35,11 @@ class viz(object):
     def plot_results(self):
       assert (self.classification),\
           """ No results object to be plot! """
-      z, x, y = self.classification.val()
-      graph = plt.scatter(x, y, c=z, s=3)
+      data = pd.read_csv(self.data)
+      x = data['x']
+      y = data['y']
+      pred_label, pred_prob = self.classification.val()
+      graph = plt.scatter(x, y, c=pred_label, s=3)
 
       plt.xlabel('x')
       plt.ylabel('y')

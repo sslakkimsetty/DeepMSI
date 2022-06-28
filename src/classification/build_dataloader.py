@@ -9,7 +9,7 @@ import torchvision.transforms as transforms
 class MSISpectrumDataset(Dataset):
     """collections of spectra in a Mass spectrometry imaging dataset """
 
-    def __init__(self, csv_file, transform=None):
+    def __init__(self, csv_file, sampler = 'RandomSampler', transform=None):
         """
         Args:
             csv_file (string): Path to the csv file with annotations.
@@ -17,6 +17,7 @@ class MSISpectrumDataset(Dataset):
                 on a sample.
         """
         self.msi_dataset = pd.read_csv(csv_file, index_col = 0)
+        self.msi_dataset = self.msi_dataset.reset_index(drop=True)
         self.csv_file = csv_file
         self.transform = transform
 
@@ -62,11 +63,38 @@ class ToTensor(object):
                 'y_coord': torch.from_numpy(y_coord)
                  }
 
-def build_dataloader(csv_file = 'bladder_train.csv', batch_size = 32):
+def build_dataloader(csv_file = 'bladder_train.csv', batch_size = 32, random = True):
   transformed_dataset = MSISpectrumDataset(csv_file = csv_file,
                                            transform=transforms.Compose([
                                                ToTensor()
                                            ]))
   dataloader = DataLoader(transformed_dataset, batch_size=batch_size,
-                        shuffle=True, num_workers=0)
+                        shuffle = random, num_workers=0)
+  return dataloader
+
+
+def build_dataloader_mi(csv_file = 'bladder_train.csv', batch_size = 32, random = True, pred = None, ratio = 0.1):
+  transformed_dataset = MSISpectrumDataset(csv_file = csv_file,
+                                           transform=transforms.Compose([
+                                               ToTensor()
+                                           ]))
+  pred['label'] = pred['label'].astype(dtype ='int64')
+  for sample_idx in transformed_dataset.msi_dataset['sample_id'].unique():
+    pos = transformed_dataset.msi_dataset.label[transformed_dataset.msi_dataset['sample_id']==sample_idx].sum()
+    if pos:
+      ids = np.array(transformed_dataset.msi_dataset['sample_id']== sample_idx)
+      transformed_dataset.msi_dataset.label[ids] = pred.label[ids]
+
+      if pred.label[ids].sum() != 0:
+
+        k = int(ratio*ids.sum())
+
+        id_pos = pred.prob[ids].nlargest(k).index.values
+
+        transformed_dataset.msi_dataset.label[id_pos] = int(1)
+
+
+    
+  dataloader = DataLoader(transformed_dataset, batch_size=batch_size,
+                        shuffle = random, num_workers=0)
   return dataloader
