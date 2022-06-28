@@ -58,7 +58,6 @@ Description: # DeepMSI
         ```python
         classifier.train()
         ```
-        
         ### Validation
         
         ```python
